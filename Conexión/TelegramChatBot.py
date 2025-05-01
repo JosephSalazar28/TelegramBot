@@ -1,10 +1,10 @@
-import os
-import json
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
+import os
+import json
 
 # ---------------- CONFIGURACIÓN DE GOOGLE SHEETS ---------------- #
 # Alcances (scopes) para acceder a Google Sheets
@@ -13,12 +13,13 @@ scope = ["https://spreadsheets.google.com/feeds",
          "https://www.googleapis.com/auth/drive.file",
          "https://www.googleapis.com/auth/drive"]
 
-# Autenticación con el archivo JSON
-creds = ServiceAccountCredentials.from_json_keyfile_name('credenciales.json', scope)
+# Cargar credenciales desde variable de entorno
+google_credentials_json = json.loads(os.environ['GOOGLE_CREDENTIALS'])
+creds = ServiceAccountCredentials.from_json_keyfile_dict(google_credentials_json, scope)
 client = gspread.authorize(creds)
 
 # Abrir la hoja de cálculo
-sheet = client.open("Cuentas & Telegram").sheet1  # Cambia el nombre si tu hoja se llama diferente
+sheet = client.open("Cuentas & Tel").sheet1  # Cambia el nombre si tu hoja se llama diferente
 
 # Función para guardar mensajes
 def guardar_mensaje(usuario, mensaje):
@@ -26,17 +27,9 @@ def guardar_mensaje(usuario, mensaje):
     sheet.append_row([fecha_hora, usuario, mensaje])
 
 # ---------------- CONFIGURACIÓN DEL BOT DE TELEGRAM ---------------- #
-TELEGRAM_TOKEN = '8153041663:AAFtgq2Q5Zsr2LCsA8wx8wP9uKE334meU-w'
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 
 # Función que maneja los mensajes recibidos
-#async def mensaje_recibido(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    #usuario = update.message.from_user.full_name
-    #texto = update.message.text
-
-    #guardar_mensaje(usuario, texto)
-
-    # Opcional: Confirmación al usuario
-    #await update.message.reply_text("✅ Mensaje guardado en Google Sheets.")
 async def mensaje_recibido(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     partes = text.split(' ', 1)
@@ -59,6 +52,7 @@ async def mensaje_recibido(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sheet.append_row(fila)
 
     await update.message.reply_text("Transacción registrada ✅")
+
 # ---------------- INICIO DEL BOT ---------------- #
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
