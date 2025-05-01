@@ -1,3 +1,5 @@
+import os
+import json
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 import gspread
